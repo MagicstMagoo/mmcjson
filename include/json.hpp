@@ -147,13 +147,13 @@ namespace json
 		value& operator|=(const object& rhs);
 		value& operator|=(object&& rhs);
 
-		value operator&(const object& rhs)&;
-		value operator&(object&& rhs)&;
-		value operator&(const object& rhs)&&;
-		value operator&(object&& rhs)&&;
+		//value operator&(const object& rhs)&;
+		//value operator&(object&& rhs)&;
+		//value operator&(const object& rhs)&&;
+		//value operator&(object&& rhs)&&;
 
-		value& operator&=(const object& rhs);
-		value& operator&=(object&& rhs);
+		//value& operator&=(const object& rhs);
+		//value& operator&=(object&& rhs);
 
 		value operator+(const array& rhs)&;
 		value operator+(array&& rhs)&;
