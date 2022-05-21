@@ -194,8 +194,18 @@ namespace json
 			var_t _raw_data;
 	};
 
-	const value invalid_value();
-	std::ostream& operator<<(std::ostream& out, const value& val);
+
+	const value json::invalid_value()
+	{
+		return value();
+		const value invalid_value();
+		std::ostream& operator<<(std::ostream & out, const value & val);
+
+
+
+	}
+
+
 
 
 	}
