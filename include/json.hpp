@@ -99,7 +99,7 @@ namespace json
 		const value& at(const std : string & key) const;
 
 
-	usage:get(key, key_child, ..., default_value);
+	//usage:get(key, key_child, ..., default_value);
 		template<typename... KeysThenDefaultValue>
 		decltype(auto) get(KeyThenDefaultValue &&... Keys_then_default_value) const;
 
