@@ -174,8 +174,28 @@ namespace json
 		explicit operator long double() const { return as_long_double(); }
 		explicit operator std::string() const { return as_string(); }
 
+		private:
+			static var_t deep_copy(const var_t& src);
 
+			template <typename... KeysThenDefaultValue, size_t... KeysIndexes>
+			decltype(auto) get(
+				std::tuple<KeysThenDefaultValue...> keys_then_default_value,
+				std::index_sequence<KeysIndexes...>) const;
 
+			template <typename T, typename FirstKey, typename... RestKeys>
+			decltype(auto) get_aux(T&& default_value, FirstKey&& first, RestKeys &&... rest) const;
+			template <typename T, typename UniqueKey>
+			decltype(auto) get_aux(T&& default_value, UniqueKey&& first) const;
+
+			const std::string& as_basic_type_str() const;
+			std::string& as_basic_type_str();
+
+			value_type _type = value_type::Null;
+			var_t _raw_data;
+	};
+
+	const value invalid_value();
+	std::ostream& operator<<(std::ostream& out, const value& val);
 
 
 	}
