@@ -42,6 +42,88 @@ namespace json
 		using var_t = std::variant<std::string, array_ptr, object_ptr>;
 
 	public:
-		//value
+		//value declare
+		value();
+		value(const value& rhs);
+		value(value&& rhs) noexcept;
+		value(bool b);
+		
+		//C.h变量
+		value(int num);
+		value(unsigned num);
+		value(long num);
+		value(unsigned long num);
+		value(long long num);
+		value(unsigned long long num);
+		
+		value(float num);
+		value(double num);
+		value(long double num);
+
+		value(const char* str);
+		value(std::string str);
+
+
+		value(array arr);
+		//for array
+		value(std::initializer_list<value> init_list);
+
+
+		value(object obj);
+
+
+		//从原始数据构建~
+		template<typename... Args> value(value_type type, Args &&...args);
+		
+		//禁止将其他类型转换为值
+		template <typename T>value(T) = delete;
+
+		~value();
+
+	
+		//bool
+		bool valid() const noexcept { return _type != value_type::Invalid; }
+		bool empty() const noexcept { return is_null(); }
+		bool is_null() const noexcept { return _type == value_type::Null; }
+		bool is_number() const noexcept { return _type == value_type::Number; }
+		bool is_boolean() const noexcept { return _type == value_type::Boolean; }
+		bool is_string() const noexcept { return _type == value_type::String; }
+		bool is_array() const noexcept { return _type == value_type::Array; }
+		bool is_object() const noexcept { return _type == value_type::Object; }
+		bool contains(const std::string& key) const;
+		bool contains(size_t pos) const;
+
+		value_type type() const noexcept { return _type; }
+
+		const value& t(size_t pos) const;
+		const value& at(const std : string & key) const;
+
+
+	usage:get(key, key_child, ..., default_value);
+		template<typename... KeysThenDefaultValue>
+		decltype(auto) get(KeyThenDefaultValue &&... Keys_then_default_value) const;
+
+		bool as_boolean() const;
+		int as_integer() const;
+		//unsigned as_unsigned() const;
+		long as_long() const;
+		unsigned long as_unsigned_long() const;
+		long long as_long_long() const;
+		unsigned long long as_unsigned_long_long() const;
+		float as_float() const;
+		double as_double() const;
+		long double as_long_double() const;
+		const std::string as_string() const;
+		const array& as_array() const;
+		const object& as_object() const;
+
+
+		array& as_array();
+		object& as_object();
+
+
+
+
+
 	}
 }
