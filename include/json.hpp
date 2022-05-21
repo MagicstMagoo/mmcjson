@@ -122,6 +122,59 @@ namespace json
 		object& as_object();
 
 
+		template<typename... Args> decltype(auto) array_emplace(Args &&...args);
+		template<typename... Args> decltype(auto) object_emplace(Args &&...args);
+		void clear() noexcept;
+
+		// return raw string
+		const std::string to_string() const;
+		const std::string format(std::string shift_str = "    ",
+		size_t basic_shift_count = 0) const;
+
+		value& operator=(const value& rhs);
+		value& operator=(value&&) noexcept;
+
+		const value& operator[](size_t pos) const;
+		value& operator[](size_t pos);
+		value& operator[](const std::string& key);
+		value& operator[](std::string&& key);
+
+		value operator|(const object& rhs)&;
+		value operator|(object&& rhs)&;
+		value operator|(const object& rhs)&&;
+		value operator|(object&& rhs)&&;
+
+		value& operator|=(const object& rhs);
+		value& operator|=(object&& rhs);
+
+		value operator&(const object& rhs)&;
+		value operator&(object&& rhs)&;
+		value operator&(const object& rhs)&&;
+		value operator&(object&& rhs)&&;
+
+		value& operator&=(const object& rhs);
+		value& operator&=(object&& rhs);
+
+		value operator+(const array& rhs)&;
+		value operator+(array&& rhs)&;
+		value operator+(const array& rhs)&&;
+		value operator+(array&& rhs)&&;
+
+		value& operator+=(const array& rhs);
+		value& operator+=(array&& rhs);
+
+		explicit operator bool() const { return as_boolean(); }
+		explicit operator int() const { return as_integer(); }
+		explicit operator long() const { return as_long(); }
+		explicit operator unsigned long() const { return as_unsigned_long(); }
+		explicit operator long long() const { return as_long_long(); }
+		explicit operator unsigned long long() const { return as_unsigned_long_long(); }
+		explicit operator float() const { return as_float(); }
+		explicit operator double() const { return as_double(); }
+		explicit operator long double() const { return as_long_double(); }
+		explicit operator std::string() const { return as_string(); }
+
+
 
 
 
