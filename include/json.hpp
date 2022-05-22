@@ -1018,10 +1018,782 @@ namespace json
     //     return in;
     // }
 
+    /*
     MMCJSON_INLINE std::istream& operator<<(std::istream& out, const value& val)
     {
     //
     }
+    */
+
+
+    //array impl
+
+
+    template <typename... Args> decltype(auto) array::emplace_back(Args &&...args)
+    {
+        static_assert(std::is_constructible<raw_array::value_type, Args...>::value,
+            "Parameter can't be used to construct a raw_array::value_type");
+        return _array_data.emplace_back(std::forward<Args>(args)...);
+    }
+
+    MMCJSON_INLINE array::array(const raw_array& arr) : _array_data(arr) { ; }
+
+    MMCJSON_INLINE array::array(raw_array&& arr) noexcept
+        : _array_data(std::move(arr))
+    {
+        ;
+    }
+
+    MMCJSON_INLINE
+        array::array(std::initializer_list<raw_array::value_type> init_list)
+        : _array_data(init_list)
+    {
+        ;
+    }
+
+    template<typename ArrayType>
+    MMCJSON_INLINE array::array(ArrayType arr)
+    {
+        static_assert(
+            std::is_constructible<json::value, typename ArrayType::value_type>::value,
+            "Parameter can't be used to construct a json::value");
+        _array_data.assign(
+            std::make_move_iterator(arr.begin()),
+            std::make_move_iterator(arr.end()));
+    }
+
+    MMCJSON_INLINE const value& array::at(size_t pos) const
+    {
+        return _array_data.at(pos);
+    }
+
+    MMCJSON_INLINE void array::clear() noexcept { _array_data.clear(); }
+
+    MMCJSON_INLINE const std::string array::to_string() const
+    {
+        std::string str = "[";
+        for (const value& val : _array_data) {
+            str += val.to_string() + ",";
+        }
+        if (str.back() == ',') {
+            str.pop_back();
+        }
+        str += "]";
+        return str;
+    }
+
+    MMCJSON_INLINE const std::string array::format(std::string shift_str,
+        size_t basic_shift_count) const
+    {
+        std::string shift;
+        for (size_t i = 0; i != basic_shift_count + 1; ++i) {
+            shift += shift_str;
+        }
+
+        std::string str = "[";
+        for (const value& val : _array_data) {
+            str += "\n" + shift + val.format(shift_str, basic_shift_count + 1) + ",";
+        }
+        if (str.back() == ',') {
+            str.pop_back(); // pop last ','
+        }
+
+        str += '\n';
+        for (size_t i = 0; i != basic_shift_count; ++i) {
+            str += shift_str;
+        }
+        str += ']';
+        return str;
+    }
+
+    MMCJSON_INLINE bool array::get(size_t pos, bool default_value) const
+    {
+        if (contains(pos)) {
+            value value = _array_data.at(pos);
+            if (value.is_boolean()) {
+                return value.as_boolean();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE int array::get(size_t pos, int default_value) const
+    {
+        if (contains(pos)) {
+            value value = _array_data.at(pos);
+            if (value.is_number()) {
+                return value.as_integer();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE long array::get(size_t pos, long default_value) const
+    {
+        if (contains(pos)) {
+            value value = _array_data.at(pos);
+            if (value.is_number()) {
+                return value.as_long();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE unsigned long array::get(size_t pos,
+        unsigned default_value) const
+    {
+        if (contains(pos)) {
+            value value = _array_data.at(pos);
+            if (value.is_number()) {
+                return value.as_unsigned_long();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE long long array::get(size_t pos,
+        long long default_value) const
+    {
+        if (contains(pos)) {
+            value value = _array_data.at(pos);
+            if (value.is_number()) {
+                return value.as_long_long();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE unsigned long long
+        array::get(size_t pos, unsigned long long default_value) const
+    {
+        if (contains(pos)) {
+            value value = _array_data.at(pos);
+            if (value.is_number()) {
+                return value.as_unsigned_long_long();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE float array::get(size_t pos, float default_value) const
+    {
+        if (contains(pos)) {
+            value value = _array_data.at(pos);
+            if (value.is_number()) {
+                return value.as_float();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE double array::get(size_t pos, double default_value) const
+    {
+        if (contains(pos)) {
+            value value = _array_data.at(pos);
+            if (value.is_number()) {
+                return value.as_double();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE long double array::get(size_t pos,
+        long double default_value) const
+    {
+        if (contains(pos)) {
+            value value = _array_data.at(pos);
+            if (value.is_number()) {
+                return value.as_long_double();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE const std::string array::get(size_t pos,
+        std::string default_value) const
+    {
+        if (contains(pos)) {
+            value value = _array_data.at(pos);
+            if (value.is_string()) {
+                return value.as_string();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE const std::string array::get(size_t pos,
+        const char* default_value) const
+    {
+        if (contains(pos)) {
+            value value = _array_data.at(pos);
+            if (value.is_string()) {
+                return value.as_string();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE const value& array::get(size_t pos) const
+    {
+        if (contains(pos)) {
+            return _array_data.at(pos);
+        }
+        else {
+            static value null;
+            return null;
+        }
+    }
+
+    MMCJSON_INLINE array::iterator array::begin() noexcept
+    {
+        return _array_data.begin();
+    }
+
+    MMCJSON_INLINE array::iterator array::end() noexcept
+    {
+        return _array_data.end();
+    }
+
+    MMCJSON_INLINE array::const_iterator array::begin() const noexcept
+    {
+        return _array_data.begin();
+    }
+
+    MMCJSON_INLINE array::const_iterator array::end() const noexcept
+    {
+        return _array_data.end();
+    }
+
+    MMCJSON_INLINE array::const_iterator array::cbegin() const noexcept
+    {
+        return _array_data.cbegin();
+    }
+
+    MMCJSON_INLINE array::const_iterator array::cend() const noexcept
+    {
+        return _array_data.cend();
+    }
+
+    MMCJSON_INLINE array::reverse_iterator array::rbegin() noexcept
+    {
+        return _array_data.rbegin();
+    }
+
+    MMCJSON_INLINE array::reverse_iterator array::rend() noexcept
+    {
+        return _array_data.rend();
+    }
+
+    MMCJSON_INLINE array::const_reverse_iterator array::rbegin() const noexcept
+    {
+        return _array_data.rbegin();
+    }
+
+    MMCJSON_INLINE array::const_reverse_iterator array::rend() const noexcept
+    {
+        return _array_data.rend();
+    }
+
+    MMCJSON_INLINE array::const_reverse_iterator array::crbegin() const noexcept
+    {
+        return _array_data.crbegin();
+    }
+
+    MMCJSON_INLINE array::const_reverse_iterator array::crend() const noexcept
+    {
+        return _array_data.crend();
+    }
+
+    MMCJSON_INLINE value& array::operator[](size_t pos) { return _array_data[pos]; }
+
+    MMCJSON_INLINE const value& array::operator[](size_t pos) const
+    {
+        return _array_data[pos];
+    }
+
+    MMCJSON_INLINE array array::operator+(const array& rhs)&
+    {
+        array temp = *this;
+        temp._array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
+        return temp;
+    }
+
+    MMCJSON_INLINE array array::operator+(array&& rhs)&
+    {
+        array temp = *this;
+        temp._array_data.insert(_array_data.end(),
+            std::make_move_iterator(rhs.begin()),
+            std::make_move_iterator(rhs.end()));
+        return temp;
+    }
+
+    MMCJSON_INLINE array array::operator+(const array& rhs)&&
+    {
+        _array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
+        return std::move(*this);
+    }
+
+    MMCJSON_INLINE array array::operator+(array&& rhs)&&
+    {
+        _array_data.insert(_array_data.end(),
+            std::make_move_iterator(rhs.begin()),
+            std::make_move_iterator(rhs.end()));
+        return std::move(*this);
+    }
+
+    MMCJSON_INLINE array& array::operator+=(const array& rhs)
+    {
+        _array_data.insert(_array_data.end(), rhs.begin(), rhs.end());
+        return *this;
+    }
+
+    MMCJSON_INLINE array& array::operator+=(array&& rhs)
+    {
+        _array_data.insert(_array_data.end(),
+            std::make_move_iterator(rhs.begin()),
+            std::make_move_iterator(rhs.end()));
+        return *this;
+    }
+
+     const raw_array &array::raw_data() const
+     {
+         return _array_data;
+     }
+
+
+
+    //object impl
+    template <typename... Args> decltype(auto) object::emplace(Args &&...args)
+    {
+        static_assert(
+            std::is_constructible<raw_object::value_type, Args...>::value,
+            "Parameter can't be used to construct a raw_object::value_type");
+        return _object_data.emplace(std::forward<Args>(args)...);
+    }
+
+    template <typename... Args> decltype(auto) object::insert(Args &&...args)
+    {
+        return _object_data.insert(std::forward<Args>(args)...);
+    }
+
+    MMCJSON_INLINE std::ostream& operator<<(std::ostream& out, const array& arr)
+    {
+        //TODO: format output
+
+        out << arr.to_string();
+        return out;
+    }
+
+    MMCJSON_INLINE object::object(const raw_object& raw_obj)
+        : _object_data(raw_obj)
+    {
+        ;
+    }
+
+    MMCJSON_INLINE object::object(raw_object&& raw_obj)
+        : _object_data(std::move(raw_obj))
+    {
+        ;
+    }
+
+    MMCJSON_INLINE
+        object::object(std::initializer_list<raw_object::value_type> init_list)
+    {
+        _object_data.reserve(init_list.size());
+        for (const auto& [key, val] : init_list) {
+            emplace(key, val);
+        }
+    }
+
+    MMCJSON_INLINE const value& object::at(const std::string& key) const
+    {
+        return _object_data.at(key);
+    }
+
+    MMCJSON_INLINE void object::clear() noexcept { _object_data.clear(); }
+
+    MMCJSON_INLINE bool object::erase(const std::string& key)
+    {
+        return _object_data.erase(key) > 0 ? true : false;
+    }
+
+    MMCJSON_INLINE const std::string object::to_string() const
+    {
+        std::string str = "{";
+        for (const auto& [key, val] : _object_data) {
+            str += "\"" + unescape_string(key) + "\":" + val.to_string() + ",";
+        }
+        if (str.back() == ',') {
+            str.pop_back();
+        }
+        str += "}";
+        return str;
+    }
+
+    MMCJSON_INLINE const std::string
+        object::format(std::string shift_str, size_t basic_shift_count) const
+    {
+        std::string shift;
+        for (size_t i = 0; i != basic_shift_count + 1; ++i) {
+            shift += shift_str;
+        }
+
+        std::string str = "{";
+        for (const auto& [key, val] : _object_data) {
+            str += "\n" + shift + "\"" + unescape_string(key) +
+                "\": " + val.format(shift_str, basic_shift_count + 1) + ",";
+        }
+        if (str.back() == ',') {
+            str.pop_back(); // pop last ','
+        }
+
+        str += '\n';
+        for (size_t i = 0; i != basic_shift_count; ++i) {
+            str += shift_str;
+        }
+        str += '}';
+        return str;
+    }
+
+    MMCJSON_INLINE bool object::get(const std::string& key,
+        bool default_value) const
+    {
+        if (contains(key)) {
+            value value = _object_data.at(key);
+            if (value.is_boolean()) {
+                return value.as_boolean();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE int object::get(const std::string& key,
+        int default_value) const
+    {
+        if (contains(key)) {
+            value value = _object_data.at(key);
+            if (value.is_number()) {
+                return value.as_integer();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE long object::get(const std::string& key,
+        long default_value) const
+    {
+        if (contains(key)) {
+            value value = _object_data.at(key);
+            if (value.is_number()) {
+                return value.as_long();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE unsigned long object::get(const std::string& key,
+        unsigned default_value) const
+    {
+        if (contains(key)) {
+            value value = _object_data.at(key);
+            if (value.is_number()) {
+                return value.as_unsigned_long();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE long long object::get(const std::string& key,
+        long long default_value) const
+    {
+        if (contains(key)) {
+            value value = _object_data.at(key);
+            if (value.is_number()) {
+                return value.as_long_long();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE unsigned long long
+        object::get(const std::string& key, unsigned long long default_value) const
+    {
+        if (contains(key)) {
+            value value = _object_data.at(key);
+            if (value.is_number()) {
+                return value.as_unsigned_long_long();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE float object::get(const std::string& key,
+        float default_value) const
+    {
+        if (contains(key)) {
+            value value = _object_data.at(key);
+            if (value.is_number()) {
+                return value.as_float();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE double object::get(const std::string& key,
+        double default_value) const
+    {
+        if (contains(key)) {
+            value value = _object_data.at(key);
+            if (value.is_number()) {
+                return value.as_double();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE long double object::get(const std::string& key,
+        long double default_value) const
+    {
+        if (contains(key)) {
+            value value = _object_data.at(key);
+            if (value.is_number()) {
+                return value.as_long_double();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE const std::string object::get(const std::string& key,
+        std::string default_value) const
+    {
+        if (contains(key)) {
+            value value = _object_data.at(key);
+            if (value.is_string()) {
+                return value.as_string();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE const std::string object::get(const std::string& key,
+        const char* default_value) const
+    {
+        if (contains(key)) {
+            value value = _object_data.at(key);
+            if (value.is_string()) {
+                return value.as_string();
+            }
+            else {
+                return default_value;
+            }
+        }
+        else {
+            return default_value;
+        }
+    }
+
+    MMCJSON_INLINE const value& object::get(const std::string& key) const
+    {
+        if (contains(key)) {
+            return _object_data.at(key);
+        }
+        else {
+            static value null;
+            return null;
+        }
+    }
+
+    MMCJSON_INLINE object::iterator object::begin() noexcept
+    {
+        return _object_data.begin();
+    }
+
+    MMCJSON_INLINE object::iterator object::end() noexcept
+    {
+        return _object_data.end();
+    }
+
+    MMCJSON_INLINE object::const_iterator object::begin() const noexcept
+    {
+        return _object_data.begin();
+    }
+
+    MMCJSON_INLINE object::const_iterator object::end() const noexcept
+    {
+        return _object_data.end();
+    }
+
+    MMCJSON_INLINE object::const_iterator object::cbegin() const noexcept
+    {
+        return _object_data.cbegin();
+    }
+
+    MMCJSON_INLINE object::const_iterator object::cend() const noexcept
+    {
+        return _object_data.cend();
+    }
+
+    MMCJSON_INLINE value& object::operator[](const std::string& key)
+    {
+        return _object_data[key];
+    }
+
+    MMCJSON_INLINE value& object::operator[](std::string&& key)
+    {
+        return _object_data[std::move(key)];
+    }
+
+    MMCJSON_INLINE object object::operator|(const object& rhs)&
+    {
+        object temp = *this;
+        temp._object_data.insert(rhs.begin(), rhs.end());
+        return temp;
+    }
+
+    MMCJSON_INLINE object object::operator|(object&& rhs)&
+    {
+        object temp = *this;
+        temp._object_data.merge(std::move(rhs._object_data));
+        temp._object_data.insert(
+            std::make_move_iterator(rhs.begin()),
+            std::make_move_iterator(rhs.end()));
+        return temp;
+    }
+
+    MMCJSON_INLINE object object::operator|(const object& rhs)&&
+    {
+        _object_data.insert(rhs.begin(), rhs.end());
+        return std::move(*this);
+    }
+
+    MMCJSON_INLINE object object::operator|(object&& rhs)&&
+    {
+        _object_data.merge(std::move(rhs._object_data));
+        _object_data.insert(
+            std::make_move_iterator(rhs.begin()),
+            std::make_move_iterator(rhs.end()));
+        return std::move(*this);
+    }
+
+    MMCJSON_INLINE object& object::operator|=(const object& rhs)
+    {
+        _object_data.insert(rhs.begin(), rhs.end());
+        return *this;
+    }
+
+    MMCJSON_INLINE object& object::operator|=(object&& rhs)
+    {
+        _object_data.insert(
+            std::make_move_iterator(rhs.begin()),
+            std::make_move_iterator(rhs.end()));
+        return *this;
+    }
+
 
 	}
 }
