@@ -1,5 +1,5 @@
 <div align="center">
-# mmcjson
+mmcjson
 
 Json/Json5 parser/serializer
 
