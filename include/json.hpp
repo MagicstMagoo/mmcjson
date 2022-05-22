@@ -1410,11 +1410,12 @@ namespace json
         return *this;
     }
 
+    /*
      const raw_array &array::raw_data() const
      {
          return _array_data;
      }
-
+     */
 
 
     //object impl
@@ -1758,7 +1759,7 @@ namespace json
     MMCJSON_INLINE object object::operator|(object&& rhs)&
     {
         object temp = *this;
-        temp._object_data.merge(std::move(rhs._object_data));
+        //temp._object_data.merge(std::move(rhs._object_data));
         temp._object_data.insert(
             std::make_move_iterator(rhs.begin()),
             std::make_move_iterator(rhs.end()));
@@ -1773,7 +1774,7 @@ namespace json
 
     MMCJSON_INLINE object object::operator|(object&& rhs)&&
     {
-        _object_data.merge(std::move(rhs._object_data));
+        //_object_data.merge(std::move(rhs._object_data));
         _object_data.insert(
             std::make_move_iterator(rhs.begin()),
             std::make_move_iterator(rhs.end()));
