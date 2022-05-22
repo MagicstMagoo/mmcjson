@@ -908,6 +908,7 @@ namespace json
         return *this;
     }
 
+    /*
     MMCJSON_INLINE value value::operator&(const object& rhs)&
     {
         return as_object() & rhs;
@@ -939,6 +940,7 @@ namespace json
         as_object() &= std::move(rhs);
         return *this;
     }
+    */
 
     MMCJSON_INLINE value value::operator+(const array & rhs)&
     {
@@ -1015,6 +1017,11 @@ namespace json
     // {
     //     return in;
     // }
+
+    MMCJSON_INLINE std::istream& operator<<(std::istream& out, const value& val)
+    {
+    //
+    }
 
 	}
 }
