@@ -1,3 +1,4 @@
+<div align="center">
 # mmcjson
 
 Json/Json5 parser/serializer
@@ -10,4 +11,4 @@ Json/Json5 parser/serializer
 
 I am coding and I'll improve the README when I'm done it
 
-<img alt="FUN" src="https://io.magicst.cn/mmcjson-icon/icon.png" width=256 height=258/>
+<img alt="FUN" src="./img/icon.png" width=256 height=258/>
