@@ -2299,5 +2299,81 @@ namespace json
         return parser::parse(content);
     }
 
+
+    //aux impl
+
+
+    MMCJSON_INLINE std::string unescape_string(std::string str)
+    {
+        for (size_t pos = 0; pos < str.size(); ++pos) {
+            std::string replace_str;
+            switch (str[pos]) {
+            case '\"':
+                replace_str = R"(\")";
+                break;
+            case '\\':
+                replace_str = R"(\\)";
+                break;
+            case '\b':
+                replace_str = R"(\b)";
+                break;
+            case '\f':
+                replace_str = R"(\f)";
+                break;
+            case '\n':
+                replace_str = R"(\n)";
+                break;
+            case '\r':
+                replace_str = R"(\r)";
+                break;
+            case '\t':
+                replace_str = R"(\t)";
+                break;
+            default:
+                continue;
+                break;
+            }
+            str.replace(pos, 1, replace_str);
+            ++pos;
+        }
+        return str;
+    }
+
+    MMCJSON_INLINE std::string escape_string(std::string str)
+    {
+        for (size_t pos = 0; pos + 1 < str.size(); ++pos) {
+            if (str[pos] != '\\') {
+                continue;
+            }
+            std::string replace_str;
+            switch (str[pos + 1]) {
+            case '"':
+                replace_str = "\"";
+                break;
+            case '\\':
+                replace_str = "\\";
+                break;
+            case 'b':
+                replace_str = "\b";
+                break;
+            case 'f':
+                replace_str = "\f";
+                break;
+            case 'n':
+                replace_str = "\n";
+                break;
+            case 'r':
+                replace_str = "\r";
+                break;
+            case 't':
+                replace_str = "\t";
+                break;
+            default:
+                return std::string();
+                break;
+            }
+            str.replace(pos, 2, replace_str);
+        }
+        return str;
 	}
 }
