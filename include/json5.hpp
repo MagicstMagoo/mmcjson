@@ -70,3 +70,35 @@ namespace json
             {}
         };
 
+    public:
+        std::string exceptionDetailInfo()
+        {
+            size_t start_point = _col;
+            auto len = _print_len;
+            auto current_line = _line_begin_cur;
+            std::stringstream ss;
+            ss << "at line " << _line << ", column " << _col + 1 << '\n';
+
+            while (read() != '\n' && _cur != _end && (_col - start_point) < 5)
+                ;
+            ss << std::string(current_line, _cur) << '\n';
+            ss << std::setw(len) << '^' << '\n';
+            return ss.str();
+        }
+
+        //helper class and type
+    private:
+        class unicode
+        {
+        public:
+            static const std::wregex space_separator;
+            static const std::wregex id_start;
+            static const std::wregex id_continue;
+
+            static bool isSpaceSeparator(u8char ch);
+            static bool isIdStartChar(u8char ch);
+            static bool isIdContinueChar(u8char ch);
+            static bool isDigit(u8char ch);
+            static bool isHexDigit(u8char ch);
+        };
+
