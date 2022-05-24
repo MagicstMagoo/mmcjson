@@ -102,3 +102,68 @@ namespace json
             static bool isHexDigit(u8char ch);
         };
 
+        enum class LexState
+        {
+            default_ = 0,
+            comment,
+            multiLineComment,
+            multiLineCommentAsterisk,
+            singleLineComment,
+            value,
+            identifierNameStartEscape,
+            identifierName,
+            identifierNameEscape,
+            sign,
+            zero,
+            decimalInteger,
+            decimalPointLeading,
+            decimalPoint,
+            decimalFraction,
+            decimalExponent,
+            decimalExponentSign,
+            decimalExponentInteger,
+            hexadecimal,
+            hexadecimalInteger,
+            string,
+            start,
+            beforePropertyName,
+            afterPropertyName,
+            beforePropertyValue,
+            afterPropertyValue,
+            beforeArrayValue,
+            afterArrayValue,
+            end
+        };
+
+        enum class ParseState
+        {
+            start = 21,
+            beforePropertyName,
+            afterPropertyName,
+            beforePropertyValue,
+            afterPropertyValue,
+            beforeArrayValue,
+            afterArrayValue,
+            end
+        };
+
+        enum class TokenType
+        {
+            punctuator = 0,
+            identifier,
+            null,
+            boolean,
+            numeric,
+            string,
+            eof,
+        };
+
+        struct Token
+        {
+            TokenType type;
+            value _value;
+            size_t col = 0;
+            size_t line = 0;
+        }:
+
+
