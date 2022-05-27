@@ -201,3 +201,37 @@ namespace json
         Token newToken(TokenType type, value value);
 
 
+        // opional token
+        std::optional<Token> lex_default();
+        std::optional<Token> lex_comment();
+        std::optional<Token> lex_multiLineComment();
+        std::optional<Token> lex_multiLineCommentAsterisk();
+        std::optional<Token> lex_singleLineComment();
+        std::optional<Token> lex_value();
+        std::optional<Token> lex_identifierNameStartEscape();
+        std::optional<Token> lex_identifierName();
+        std::optional<Token> lex_identifierNameEscape();
+        std::optional<Token> lex_sign();
+        std::optional<Token> lex_zero();
+        std::optional<Token> lex_decimalInteger();
+        std::optional<Token> lex_decimalPointLeading();
+        std::optional<Token> lex_decimalPoint();
+        std::optional<Token> lex_decimalFraction();
+        std::optional<Token> lex_decimalExponent();
+        std::optional<Token> lex_decimalExponentSign();
+        std::optional<Token> lex_decimalExponentInteger();
+        std::optional<Token> lex_hexadecimal();
+        std::optional<Token> lex_hexdecimalInteger();
+        std::optional<Token> lex_string();
+        std::optional<Token> lex_start();
+        std::optional<Token> lex_beforePropertyName();
+        std::optional<Token> lex_afterPropertyName();
+        std::optional<Token> lex_beforePropertyValue();
+        std::optional<Token> lex_afterPropertyValue();
+        std::optional<Token> lex_beforeArrayValue();
+        std::optional<Token> lex_afterArrayValue();
+        std::optional<Token> lex_end();
+
+        std::optional<Token> lexStates(LexState state);
+
+
