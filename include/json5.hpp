@@ -234,4 +234,36 @@ namespace json
 
         std::optional<Token> lexStates(LexState state);
 
+        // void
+        void parse_start();
+        void parse_beforePropertyName();
+        void parse_afterPropertyName();
+        void parse_beforePropertyValue();
+        void parse_beforeArrayValue();
+        void parse_afterPropertyValue();
+        void parse_afterArrayValue();
+        void parse_end();
+
+        void parseStates(ParseState state);
+
+        // stack operation
+        void push();
+        void pop();
+
+    private:
+        std::string::const_iterator _cur, _end;
+        std::string::const_iterator _line_begin_cur;
+        size_t _line = 1, _col = 0, _print_len = 0;
+        ParseState _parse_state = ParseState::start;
+        std::stack<value*> _stack;
+        std::optional<Token> _token;
+        std::string _key;
+        std::optional<value> _root;
+
+        LexState _lex_state = LexState::default_;
+        std::string _buffer;
+        bool _double_quote = false;
+        size_t _sign = 1;
+        u8char _current_char = 0;
+    };
 
