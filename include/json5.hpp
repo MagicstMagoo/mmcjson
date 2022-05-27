@@ -734,7 +734,12 @@ namespace json
         return std::stoull(buffer, nullptr, 16);
     }
 
+    MMCJSON_INLINE parser5::u8char parser5::peek(std::string::const_iterator& begin,
+        const std::string::const_iterator& end,
+        size_t* plen)
+    {
 
+    }
 
 
 
