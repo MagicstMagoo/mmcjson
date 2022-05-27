@@ -619,4 +619,97 @@ namespace json
         }
     }
 
+    MMCJSON_INLINE std::optional<parser5::u8char> parser5::escape()
+    {
+        auto c = peek(_cur, _end);
+        switch (c) {
+        case 'b':
+            read();
+            return '\b';
+
+        case 'n':
+            read();
+            return '\n';
+
+        case 'r':
+            read();
+            return '\r';
+
+        case 't':
+            read();
+            return '\t';
+
+        case 'v':
+            read();
+            return '\v';
+
+        case '0':
+            read();
+            if (unicode::isDigit(peek(_cur, _end))) {
+                throw InvalidChar(_current_char, exceptionDetailInfo());
+            }
+
+            return '\0';
+
+        case 'x':
+            read();
+            return hexEscape();
+
+        case 'u':
+            read();
+            return unicodeEscape();
+
+        case '\n':
+        case 0x2028:
+        case 0x2029:
+            read();
+            return 0;
+
+        case '\r':
+            read();
+            if (peek(_cur, _end) == '\n') {
+                read();
+            }
+
+            return std::nullopt;
+
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            throw InvalidChar(_current_char, exceptionDetailInfo());
+        default:
+            if (c == 0) {
+                throw InvalidChar(_current_char, exceptionDetailInfo());
+            }
+        }
+
+        return read();
+    }
+
+    MMCJSON_INLINE parser5::u8char parser5::hexEscape()
+    {
+        std::string buffer = "";
+        auto c = peek(_cur, _end);
+
+        if (!unicode::isHexDigit(c)) {
+            throw InvalidChar(_current_char, exceptionDetailInfo());
+        }
+
+        buffer += static_cast<char>(read());
+
+        c = peek(_cur, _end);
+        if (!unicode::isHexDigit(c)) {
+            throw InvalidChar(_current_char, exceptionDetailInfo());
+        }
+
+        buffer += static_cast<char>(read());
+
+        return std::stoi(buffer, nullptr, 16);
+    }
 
