@@ -737,9 +737,36 @@ namespace json
     MMCJSON_INLINE parser5::u8char parser5::peek(std::string::const_iterator& begin,
         const std::string::const_iterator& end,
         size_t* plen)
-    {
 
+    {
+        if (begin == end) {
+            if (plen)
+                *plen = 0;
+            return 0;
+        }
+        uint8_t head = (*begin);
+        uint64_t ch = head;
+        size_t len = 1;
+        while (begin != end && (head & 0b11000000) > 0b10000000) {
+            head <<= 1;
+            ++len;
+            ch <<= 8;
+            ch += (uint8_t)(*(begin + len - 1));
+        }
+        if (plen) {
+            *plen = len;
+        }
+        return ch;
     }
+
+    MMCJSON_INLINE parser5::u8char parser5::peek(const std::string& str)
+    {
+        auto begin = str.begin();
+        return peek(begin, str.cend());
+    }
+
+    // size_t
+    MMCJSON_INLINE constexpr size_t operator"" _sz(unsigned long long size) { return size; }
 
 
 
