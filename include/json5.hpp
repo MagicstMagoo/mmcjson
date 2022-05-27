@@ -770,3 +770,24 @@ namespace json
 
 
 
+
+
+
+    // namespace json
+    // namespace json
+    // namespace json
+    MMCJSON_INLINE void parser5::pop()
+    {
+        _stack.pop();
+
+        if (_stack.empty()) {
+            _parse_state = ParseState::end;
+        }
+        else if (_stack.top()->is_array()) {
+            _parse_state = ParseState::afterArrayValue;
+        }
+        else {
+            _parse_state = ParseState::afterPropertyValue;
+        }
+    }
+} 
