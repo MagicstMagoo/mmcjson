@@ -718,3 +718,23 @@ namespace json
         return std::stoi(buffer, nullptr, 16);
     }
 
+    // unicode render
+    MMCJSON_INLINE parser5::u8char parser5::unicodeEscape()
+    {
+        std::string buffer;
+        int count = 4;
+        while (count-- > 0) {
+            auto c = peek(_cur, _end);
+            if (!unicode::isHexDigit(c)) {
+                throw InvalidChar(_current_char, exceptionDetailInfo());
+            }
+            buffer += StringFromCharCode(read());
+        }
+
+        return std::stoull(buffer, nullptr, 16);
+    }
+
+
+
+
+
