@@ -608,4 +608,15 @@ namespace json
         return _root;
     }
 
+    // escape and format
+    MMCJSON_INLINE void parser5::literal(const std::string& s)
+    {
+        for (const auto& ch : s) {
+            char p = static_cast<char>(read());
+            if (p != ch) {
+                throw InvalidChar(_current_char, exceptionDetailInfo());
+            }
+        }
+    }
+
 
