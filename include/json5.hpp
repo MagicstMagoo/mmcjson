@@ -768,6 +768,26 @@ namespace json
     // size_t
     MMCJSON_INLINE constexpr size_t operator"" _sz(unsigned long long size) { return size; }
 
+    MMCJSON_INLINE parser5::u8char parser5::read()
+    {
+        size_t len = 0;
+        _current_char = peek(_cur, _end, &len);
+        if (_current_char == '\n') {
+            _line++;
+            _col = 0;
+            _print_len = 0;
+            _line_begin_cur = _cur + 1;
+        }
+        else if (_current_char > 0) {
+            _col++;
+        }
+
+        if (len > 0) {
+            _print_len += (std::min)(len, 2_sz);
+            _cur += len;
+        }
+        return _current_char;
+    }
 
 
 
