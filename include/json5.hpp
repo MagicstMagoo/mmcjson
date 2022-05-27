@@ -789,6 +789,21 @@ namespace json
         return _current_char;
     }
 
+    MMCJSON_INLINE std::string parser5::StringFromCharCode(parser5::u8char code)
+    {
+        if (code == 0)
+            return "";
+        std::string str;
+        for (auto i = 0; i < 8; ++i) {
+            auto ch = (0xff & code);
+            if (ch)
+                str.insert(0, 1, static_cast<char>(ch));
+            code >>= 8;
+        }
+        return str;
+    }
+
+
 
 
 
