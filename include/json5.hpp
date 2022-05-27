@@ -609,6 +609,7 @@ namespace json
     }
 
     // escape and format
+
     MMCJSON_INLINE void parser5::literal(const std::string& s)
     {
         for (const auto& ch : s) {
@@ -626,6 +627,10 @@ namespace json
         case 'b':
             read();
             return '\b';
+            
+        case 'f':
+            read();
+            return '\f';
 
         case 'n':
             read();
