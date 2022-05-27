@@ -167,3 +167,37 @@ namespace json
         }:
 
 
+
+    //constrators and callers
+
+    public:
+        ~parser5() noexcept = default;
+        static std::optional<value> parse(const std::string& content, std::string* error = nullptr);
+
+    private:
+        parser5(const std::string::const_iterator& cbegin,
+            const std::string::const_iterator& cend) noexcept
+            : _cur(cbegin), _end(cend), _line_begin_cur(cbegin)
+        {}
+        std::optional<value> parse();
+
+    private:
+
+        //utf-8 reader
+
+        static u8char peek(std::string::const_iterator& begin,
+            const std::string::const_iterator& end,
+            size_t* len = nullptr);
+        static u8char peek(const std::string& str);
+        parser5::u8char read();
+        static std::string StringFromCharCode(u8char code);
+        // escape and format
+        void literal(const std::string& s);
+        std::optional<u8char> escape();
+        u8char hexEscape();
+        u8char unicodeEscape();
+        // lex, parse, token
+        Token lex();
+        Token newToken(TokenType type, value value);
+
+
