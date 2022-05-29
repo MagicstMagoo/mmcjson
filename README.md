@@ -9,6 +9,9 @@ Json/Json5 解析/生成器
 [![C++](https://img.shields.io/badge/C++-17-%2300599C?logo=cplusplus&style=flat-square)](https://en.wikipedia.org/wiki/C++17)
 [![platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-blueviolet?style=flat-square)](https://github.com/MagicstMagoo/mmcjson)
 
+</div>
+
+
 ## 使用说明书
 
 - 在项目中包含头文件即可使用
