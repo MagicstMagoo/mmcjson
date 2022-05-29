@@ -26,7 +26,7 @@ void parsing()
 // 这是一段json5格式的信息
 {
   name: "Magicst",                 // key的引号可省略
-  emoji: '😄',                     // emoji为key
+  emoji: '🥵',                     // emoji为key
   thanks: 'thanksforyourstar',     // 单引号也可以表示字符串
   \u006Bey: ['value',],            // 普通字符和转义可以混用
   inf: +Infinity, nan: NaN,        // 数字可以以"+"开头
