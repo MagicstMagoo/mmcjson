@@ -858,10 +858,10 @@ namespace json
             return newToken(TokenType::eof, value());
         }
 
-        if (_current_char.size() == 0) {
-          read();
-          return newToken("eof");
-        }
+        //if (_current_char.size() == 0) {
+        //  read();
+        //  return newToken("eof");
+        //}
 
         if (unicode::isSpaceSeparator(_current_char)) {
             read();
