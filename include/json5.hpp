@@ -834,9 +834,820 @@ namespace json
         }
     }
 
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_default()
+    {
+        switch (_current_char) {
+        case '\t':
+        case '\v':
+        case '\f':
+        case ' ':
+        case '\n':
+        case '\r':
+        case 0x00A0:
+        case 0xFEFF:
+        case 0x2028:
+        case 0x2029:
+            read();
+            return std::nullopt;
+        case '/':
+            read();
+            _lex_state = LexState::comment;
+            return std::nullopt;
+        case 0:
+            read();
+            return newToken(TokenType::eof, value());
+        }
 
+        if (_current_char.size() == 0) {
+          read();
+          return newToken("eof");
+        }
 
+        if (unicode::isSpaceSeparator(_current_char)) {
+            read();
+            return std::nullopt;
+        }
 
+        //      throw InvalidLexState();
+        return lexStates((LexState)_parse_state);
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_comment()
+    {
+        switch (_current_char) {
+        case '*':
+            read();
+            _lex_state = LexState::multiLineComment;
+            return std::nullopt;
+
+        case '/':
+            read();
+            _lex_state = LexState::singleLineComment;
+            return std::nullopt;
+        }
+
+        throw InvalidChar(_current_char, exceptionDetailInfo());
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_multiLineComment()
+    {
+        if (_current_char == '*') {
+            read();
+            _lex_state = LexState::multiLineCommentAsterisk;
+            return std::nullopt;
+        }
+
+        if (_current_char == 0) {
+            throw InvalidChar(_current_char, exceptionDetailInfo());
+        }
+
+        read();
+        return std::nullopt;
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_multiLineCommentAsterisk()
+    {
+        switch (_current_char) {
+        case '*':
+            read();
+            return std::nullopt;
+
+        case '/':
+            read();
+            _lex_state = LexState::default_;
+            return std::nullopt; //$
+
+        default:
+            if (_current_char == 0) {
+                throw InvalidChar(_current_char, exceptionDetailInfo());
+            }
+        }
+
+        read();
+        _lex_state = LexState::multiLineComment;
+        return std::nullopt;
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_singleLineComment()
+    {
+        switch (_current_char) {
+        case '\n':
+        case '\r':
+        case 0x2028:
+        case 0x2029:
+            read();
+            _lex_state = LexState::default_;
+            return std::nullopt;
+        case 0:
+            read();
+            return newToken(TokenType::eof, value());
+        }
+        read();
+        return std::nullopt;
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_value()
+    {
+        switch (_current_char) {
+        case '{':
+        case '[':
+            return newToken(TokenType::punctuator, value(StringFromCharCode(read())));
+        case 'n':
+            read();
+            literal("ull");
+            return newToken(TokenType::null, value());
+        case 't':
+            read();
+            literal("rue");
+            return newToken(TokenType::boolean, value(true));
+        case 'f':
+            read();
+            literal("alse");
+            return newToken(TokenType::boolean, value(false));
+        case '-':
+        case '+':
+            if (read() == '-') {
+                _sign = SIZE_MAX;
+            }
+            _lex_state = LexState::sign;
+            return std::nullopt;
+        case '.':
+            _buffer = StringFromCharCode(read());
+            _lex_state = LexState::decimalPointLeading;
+            return std::nullopt;
+
+        case '0':
+            _buffer = StringFromCharCode(read());
+            _lex_state = LexState::zero;
+            return std::nullopt;
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            _buffer = StringFromCharCode(read());
+            _lex_state = LexState::decimalInteger;
+            return std::nullopt;
+        case 'I':
+            read();
+            literal("nfinity");
+            return newToken(TokenType::numeric, INFINITY);
+        case 'N':
+            read();
+            literal("aN");
+            return newToken(TokenType::numeric, NAN);
+        case '\"':
+        case '\'':
+            _double_quote = (read() == '\"');
+            _buffer = "";
+            _lex_state = LexState::string;
+            return std::nullopt;
+        }
+        throw InvalidChar(_current_char, exceptionDetailInfo());
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_identifierNameStartEscape()
+    {
+        if (_current_char != 'u') {
+            throw InvalidChar(_current_char, exceptionDetailInfo());
+        }
+        read();
+        auto u = unicodeEscape();
+        switch (u) {
+        case '$':
+        case '_':
+            break;
+        default:
+            if (!unicode::isIdStartChar(u)) {
+                throw InvalidIdentifier("", exceptionDetailInfo());
+            }
+            break;
+        }
+        _buffer += StringFromCharCode(u);
+        _lex_state = LexState::identifierName;
+        return std::nullopt;
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_identifierName()
+    {
+        switch (_current_char) {
+        case '$':
+        case '_':
+        case 0x200C:
+        case 0x200D:
+            _buffer += StringFromCharCode(read());
+            return std::nullopt;
+        case '\\':
+            read();
+            _lex_state = LexState::identifierNameEscape;
+            return std::nullopt;
+        }
+
+        if (unicode::isIdContinueChar(_current_char)) {
+            _buffer += StringFromCharCode(read());
+            return std::nullopt;
+        }
+
+        return newToken(TokenType::identifier, _buffer);
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_identifierNameEscape()
+    {
+        if (_current_char != 'u') {
+            throw InvalidChar(_current_char, exceptionDetailInfo());
+        }
+        read();
+        auto u = unicodeEscape();
+        switch (u) {
+        case '$':
+        case '_':
+        case 0x200C:
+        case 0x200D:
+            break;
+        default:
+            if (!unicode::isIdStartChar(u)) {
+                throw InvalidIdentifier("", exceptionDetailInfo());
+            }
+            break;
+        }
+        _buffer += StringFromCharCode(u);
+        _lex_state = LexState::identifierName;
+        return std::nullopt;
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_sign()
+    {
+        switch (_current_char) {
+        case '.':
+            _buffer = StringFromCharCode(read());
+            _lex_state = LexState::decimalPointLeading;
+            return std::nullopt;
+
+        case '0':
+            _buffer = StringFromCharCode(read());
+            _lex_state = LexState::zero;
+            return std::nullopt;
+
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            _buffer = StringFromCharCode(read());
+            _lex_state = LexState::decimalInteger;
+            return std::nullopt;
+
+        case 'I':
+            read();
+            literal("nfinity");
+            return newToken(TokenType::numeric, _sign * INFINITY);
+
+        case 'N':
+            read();
+            literal("aN");
+            return newToken(TokenType::numeric, NAN);
+        }
+        throw InvalidChar(_current_char, exceptionDetailInfo());
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_zero()
+    {
+        switch (_current_char) {
+        case '.':
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::decimalPoint;
+            return std::nullopt; //$
+
+        case 'e':
+        case 'E':
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::decimalExponent;
+            return std::nullopt; //$
+
+        case 'x':
+        case 'X':
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::hexadecimal;
+            return std::nullopt; //$
+        }
+        return newToken(TokenType::numeric, _sign * 0);
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_decimalInteger()
+    {
+        switch (_current_char) {
+        case '.':
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::decimalPoint;
+            return std::nullopt;
+        case 'e':
+        case 'E':
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::decimalExponent;
+            return std::nullopt; //$
+        }
+        if (unicode::isDigit(_current_char)) {
+            _buffer += StringFromCharCode(read());
+            return std::nullopt;
+        }
+
+        return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_decimalPointLeading()
+    {
+        if (unicode::isDigit(_current_char)) {
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::decimalFraction;
+            return std::nullopt;
+        }
+        throw InvalidChar(_current_char, exceptionDetailInfo());
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_decimalPoint()
+    {
+        switch (_current_char) {
+        case 'e':
+        case 'E':
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::decimalExponent;
+            return std::nullopt; //$
+        }
+        if (unicode::isDigit(_current_char)) {
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::decimalFraction;
+            return std::nullopt;
+        }
+
+        return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_decimalFraction()
+    {
+        switch (_current_char) {
+        case 'e':
+        case 'E':
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::decimalExponent;
+            return std::nullopt; //$
+        }
+        if (unicode::isDigit(_current_char)) {
+            _buffer += StringFromCharCode(read());
+            return std::nullopt;
+        }
+
+        return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_decimalExponent()
+    {
+        switch (_current_char) {
+        case '+':
+        case '-':
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::decimalExponentSign;
+            return std::nullopt; //$
+        }
+
+        if (unicode::isDigit(_current_char)) {
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::decimalExponentInteger;
+            return std::nullopt;
+        }
+        throw InvalidChar(_current_char, exceptionDetailInfo());
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_decimalExponentSign()
+    {
+        if (unicode::isDigit(_current_char)) {
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::decimalExponentInteger;
+            return std::nullopt;
+        }
+        throw InvalidChar(_current_char, exceptionDetailInfo());
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_decimalExponentInteger()
+    {
+        if (unicode::isDigit(_current_char)) {
+            _buffer += StringFromCharCode(read());
+            return std::nullopt;
+        }
+        return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_hexadecimal()
+    {
+        if (unicode::isHexDigit(_current_char)) {
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::hexadecimalInteger;
+            return std::nullopt;
+        }
+        throw InvalidChar(_current_char, exceptionDetailInfo());
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_hexdecimalInteger()
+    {
+        if (unicode::isHexDigit(_current_char)) {
+            _buffer += StringFromCharCode(read());
+            return std::nullopt;
+        }
+        return newToken(TokenType::numeric, _sign * std::stod(_buffer));
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_string()
+    {
+        switch (_current_char) {
+        case '\\':
+            read();
+            _buffer += StringFromCharCode(escape().value_or(0));
+            return std::nullopt;
+        case '\"':
+            if (_double_quote) {
+                read();
+                return newToken(TokenType::string, _buffer);
+            }
+            _buffer += StringFromCharCode(read());
+            return std::nullopt;
+        case '\'':
+            if (!_double_quote) {
+                read();
+                return newToken(TokenType::string, _buffer);
+            }
+            _buffer += StringFromCharCode(read());
+            return std::nullopt;
+        case '\n':
+        case '\r':
+            throw InvalidChar(_current_char, exceptionDetailInfo());
+        case 0x2028:
+        case 0x2029:
+            // throw separatorChar(_current_char);
+            break;
+        default:
+            if (_current_char == 0) {
+                throw InvalidChar(_current_char, exceptionDetailInfo());
+            }
+        }
+        _buffer += StringFromCharCode(read());
+        return std::nullopt;
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_start()
+    {
+        switch (_current_char) {
+        case '{':
+        case '[':
+            return newToken(TokenType::punctuator, StringFromCharCode(read()));
+        }
+
+        _lex_state = LexState::value;
+        return std::nullopt;
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_beforePropertyName()
+    {
+        switch (_current_char) {
+        case '$':
+        case '_':
+            _buffer = StringFromCharCode(read());
+            _lex_state = LexState::identifierName;
+            return std::nullopt;
+        case '\\':
+            read();
+            _lex_state = LexState::identifierNameStartEscape;
+            return std::nullopt;
+        case '}':
+            return newToken(TokenType::punctuator, StringFromCharCode(read()));
+        case '\"':
+        case '\'':
+            _double_quote = (read() == '\"');
+            _lex_state = LexState::string;
+            return std::nullopt;
+        }
+
+        if (unicode::isIdStartChar(_current_char)) {
+            _buffer += StringFromCharCode(read());
+            _lex_state = LexState::identifierName;
+            return std::nullopt;
+        }
+
+        throw InvalidChar(_current_char, exceptionDetailInfo());
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_afterPropertyName()
+    {
+        if (_current_char == ':') {
+            return newToken(TokenType::punctuator, StringFromCharCode(read()));
+        }
+        throw InvalidChar(_current_char, exceptionDetailInfo());
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_beforePropertyValue()
+    {
+        _lex_state = LexState::value;
+        return std::nullopt;
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_afterPropertyValue()
+    {
+        switch (_current_char) {
+        case ',':
+        case '}':
+            return newToken(TokenType::punctuator, StringFromCharCode(read()));
+        }
+        throw InvalidChar(_current_char, exceptionDetailInfo());
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_beforeArrayValue()
+    {
+        if (_current_char == ']') {
+            return newToken(TokenType::punctuator, StringFromCharCode(read()));
+        }
+        _lex_state = LexState::value;
+        return std::nullopt;
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_afterArrayValue()
+    {
+        switch (_current_char) {
+        case ',':
+        case ']':
+            return newToken(TokenType::punctuator, StringFromCharCode(read()));
+        }
+
+        throw InvalidChar(_current_char, exceptionDetailInfo());
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lex_end()
+    {
+        throw InvalidChar(_current_char, exceptionDetailInfo());
+    }
+
+    MMCJSON_INLINE std::optional<parser5::Token> parser5::lexStates(LexState state)
+    {
+        switch (state) {
+        case LexState::default_:
+            return lex_default();
+        case LexState::comment:
+            return lex_comment();
+        case LexState::multiLineComment:
+            return lex_multiLineComment();
+        case LexState::multiLineCommentAsterisk:
+            return lex_multiLineCommentAsterisk();
+        case LexState::singleLineComment:
+            return lex_singleLineComment();
+        case LexState::value:
+            return lex_value();
+        case LexState::identifierNameStartEscape:
+            return lex_identifierNameStartEscape();
+        case LexState::identifierName:
+            return lex_identifierName();
+        case LexState::identifierNameEscape:
+            return lex_identifierNameEscape();
+        case LexState::sign:
+            return lex_sign();
+        case LexState::zero:
+            return lex_zero();
+        case LexState::decimalInteger:
+            return lex_decimalInteger();
+        case LexState::decimalPointLeading:
+            return lex_decimalPointLeading();
+        case LexState::decimalPoint:
+            return lex_decimalPoint();
+        case LexState::decimalFraction:
+            return lex_decimalFraction();
+        case LexState::decimalExponent:
+            return lex_decimalExponent();
+        case LexState::decimalExponentSign:
+            return lex_decimalExponentSign();
+        case LexState::decimalExponentInteger:
+            return lex_decimalExponentInteger();
+        case LexState::hexadecimal:
+            return lex_hexadecimal();
+        case LexState::hexadecimalInteger:
+            return lex_hexdecimalInteger();
+        case LexState::string:
+            return lex_string();
+        case LexState::start:
+            return lex_start();
+        case LexState::beforePropertyName:
+            return lex_beforePropertyName();
+        case LexState::afterPropertyName:
+            return lex_afterPropertyName();
+        case LexState::beforePropertyValue:
+            return lex_beforePropertyValue();
+        case LexState::afterPropertyValue:
+            return lex_afterPropertyValue();
+        case LexState::beforeArrayValue:
+            return lex_beforeArrayValue();
+        case LexState::afterArrayValue:
+            return lex_afterArrayValue();
+        case LexState::end:
+            return lex_end();
+        }
+
+        // throw
+        return std::nullopt;
+    }
+
+    MMCJSON_INLINE void parser5::parse_start()
+    {
+        if (_token->type == TokenType::eof) {
+            throw InvalidEOF("", exceptionDetailInfo());
+        }
+
+        push();
+    }
+
+    MMCJSON_INLINE void parser5::parse_beforePropertyName()
+    {
+        switch (_token->type) {
+        case TokenType::identifier:
+        case TokenType::string:
+            _key = _token->_value.as_string();
+            _parse_state = ParseState::afterPropertyName;
+            break;
+        case TokenType::punctuator:
+            pop();
+            break;
+        case TokenType::eof:
+            throw InvalidEOF("", exceptionDetailInfo());
+            break;
+        default:
+
+            break;
+        }
+    }
+
+    MMCJSON_INLINE void parser5::parse_afterPropertyName()
+    {
+        if (_token->type == TokenType::eof) {
+            throw InvalidEOF("", exceptionDetailInfo());
+        }
+
+        _parse_state = ParseState::beforePropertyValue;
+    }
+
+    MMCJSON_INLINE void parser5::parse_beforePropertyValue()
+    {
+        if (_token->type == TokenType::eof) {
+            throw InvalidEOF("", exceptionDetailInfo());
+        }
+        push();
+    }
+
+    MMCJSON_INLINE void parser5::parse_beforeArrayValue()
+    {
+        if (_token->type == TokenType::eof) {
+            throw InvalidEOF("", exceptionDetailInfo());
+        }
+
+        if (_token->type == TokenType::punctuator &&
+            _token->_value.as_string()[0] == ']') {
+            pop();
+            return;
+        }
+
+        push();
+    }
+
+    MMCJSON_INLINE void parser5::parse_afterPropertyValue()
+    {
+        if (_token->type == TokenType::eof) {
+            throw InvalidEOF("", exceptionDetailInfo());
+        }
+
+        switch (_token->_value.as_string()[0]) {
+        case ',':
+            _parse_state = ParseState::beforePropertyName;
+            break;
+        case '}':
+            pop();
+            break;
+        }
+    }
+
+    MMCJSON_INLINE void parser5::parse_afterArrayValue()
+    {
+        if (_token->type == TokenType::eof) {
+            throw InvalidEOF("", exceptionDetailInfo());
+        }
+        switch (_token->_value.as_string()[0]) {
+        case ',':
+            _parse_state = ParseState::beforeArrayValue;
+            break;
+        case ']':
+            pop();
+            break;
+        }
+    }
+
+    MMCJSON_INLINE void parser5::parse_end() {}
+
+    MMCJSON_INLINE void parser5::parseStates(ParseState state)
+    {
+        switch (state) {
+        case ParseState::start:
+            parse_start();
+            break;
+        case ParseState::beforePropertyName:
+            parse_beforePropertyName();
+            break;
+        case ParseState::afterPropertyName:
+            parse_afterPropertyName();
+            break;
+        case ParseState::beforePropertyValue:
+            parse_beforePropertyValue();
+            break;
+        case ParseState::beforeArrayValue:
+            parse_beforeArrayValue();
+            break;
+        case ParseState::afterPropertyValue:
+            parse_afterPropertyValue();
+            break;
+        case ParseState::afterArrayValue:
+            parse_afterArrayValue();
+            break;
+        default:
+            break;
+        }
+    }
+
+    // stack operation
+    MMCJSON_INLINE void parser5::push()
+    {
+        value v;
+        value* pv = nullptr; 
+        // only for access
+
+        switch (_token->type) {
+        case TokenType::punctuator: {
+            switch (_token->_value.as_string()[0]) {
+            case '{':
+                v = object();
+                break;
+            case '[':
+                v = array();
+                break;
+            default:
+                break;
+            }
+        } break;
+        case TokenType::null:
+        case TokenType::boolean:
+        case TokenType::numeric:
+        case TokenType::string:
+            std::swap(v, _token->_value);
+            break;
+        default:
+            break;
+        }
+
+        if (!_root.has_value()) {
+            _root = std::move(v);
+            pv = &_root.value();
+        }
+        else {
+            auto parent = _stack.top();
+            if (parent->is_array()) {
+                parent->as_array().emplace_back(std::move(v));
+                pv = &parent->as_array()[parent->as_array().size() - 1];
+            }
+            else {
+                parent->as_object()[_key] = std::move(v);
+                pv = &parent->as_object()[_key];
+            }
+        }
+
+        if (pv->is_object() || pv->is_array()) {
+            _stack.emplace(pv);
+            if (pv->is_array()) {
+                _parse_state = ParseState::beforeArrayValue;
+            }
+            else {
+                _parse_state = ParseState::beforePropertyName;
+            }
+        }
+        else {
+            if (_stack.empty()) {
+                _parse_state = ParseState::end;
+            }
+            else if (_stack.top()->is_array()) {
+                _parse_state = ParseState::afterArrayValue;
+            }
+            else {
+                _parse_state = ParseState::afterPropertyValue;
+            }
+        }
+    }
     // namespace json
     // namespace json
     // namespace json
