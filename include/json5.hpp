@@ -803,7 +803,36 @@ namespace json
         return str;
     }
 
+    // lex, parse, token
+    MMCJSON_INLINE parser5::Token parser5::newToken(TokenType type, value value)
+    {
+        Token token;
+        token.type = type;
+        token._value = value;
+        token.line = _line;
+        token.col = _col;
+        return token;
+    }
 
+    MMCJSON_INLINE parser5::Token parser5::lex()
+
+    {
+        _lex_state = LexState::default_;
+        _buffer = "";
+        _double_quote = false;
+        _sign = 1;
+
+        std::optional<Token> token;
+
+        for (;;) {
+            _current_char = peek(_cur, _end);
+
+            token = lexStates(_lex_state);
+            if (token.has_value()) {
+                return token.value();
+            }
+        }
+    }
 
 
 
