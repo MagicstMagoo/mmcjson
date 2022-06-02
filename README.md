@@ -15,6 +15,7 @@ Json/Json5 解析/生成器
 ## 使用说明书
 
 - 在项目中包含头文件即可使用
+- [demo](https://io.magicst.cn/download/benchmark.cpp)
 
  ```cpp
  #include "json.hpp"

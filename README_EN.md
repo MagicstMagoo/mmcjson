@@ -15,6 +15,7 @@ Json/Json5 parser/serializer
 ## Usage
 
 - Include the header file in your project ,and use it
+- [demo](https://io.magicst.cn/download/benchmark.cpp)
 
  ```cpp
  #include "json.hpp"
@@ -124,7 +125,7 @@ void parsing()
 // It's a Json5 content'
 {
   name: "Magicst",                 // key's quotes can be omitted
-  emoji: '??',                    // Emoji can be used as a key
+  emoji: '🥵',                    // Emoji can be used as a key
   thanks: 'thanksforyourstar',     // Single quotes can also be used as strings 
   \u006Bey: ['value',],            // Normal characters and escapes can be mixed
   inf: +Infinity, nan: NaN,        // Numbers can start with '+'
